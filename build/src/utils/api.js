@@ -4,6 +4,7 @@ const axios_1 = require("axios");
 class Api {
     constructor() {
         this.axios = axios_1.default.create({
+            baseURL: "https://activate-dev.tigo.com.py",
             withCredentials: true,
             headers: {
                 Accept: 'application/json',
