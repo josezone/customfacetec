@@ -3,21 +3,15 @@ import { FaceTecSDK } from "joset";
 import api from "./utils/api";
 
 class FaceTecProcess {
-    private successCb: (data: any) => void;
-    private errorCb: (data: any) => void;
-    private intermediaryCb: (data: any) => void;
-    private sessionToken: any;
-
     constructor(
         loader: any,
         successCb: (data: any) => void,
         errorCb: (data: any) => void,
         intermediaryCb: (data: any) => void,
+        sessionToken: any,
+        setSessionToken: any
     ) {
         {
-            this.successCb = successCb;
-            this.errorCb = errorCb;
-            this.intermediaryCb = intermediaryCb;
             FaceTecSDK.setResourceDirectory("/FaceTec_resources");
             FaceTecSDK.setImagesDirectory("/FaceTec_images");
             Promise.all([
@@ -26,40 +20,38 @@ class FaceTecProcess {
                 fetch('/FaceTec_resources/011c90516755d702cfb4205ca9d93e21fe6683b8_cache.wasm')
             ]).then((res) => Promise.all(res.map(val => val.blob()))
             ).then(() => {
-                this.getKeys(loader);
+                this.getKeys(loader, successCb, errorCb, intermediaryCb, sessionToken, setSessionToken);
             }).catch(() => {
-                this.getKeys(loader);
+                this.getKeys(loader, successCb, errorCb, intermediaryCb, sessionToken, setSessionToken);
             })
         }
     }
 
-    private async getKeys(loader: any) {
+    private async getKeys(loader: any, successCb: any, errorCb: any, intermediaryCb: any, sessionToken: any, setSessionToken: any) {
         try {
-            if (this.sessionToken) {
-                this.livenessCheckProcessor(this.sessionToken);
+            if (sessionToken) {
+                this.livenessCheckProcessor(sessionToken, successCb, errorCb, intermediaryCb);
             } else {
                 const response = await api.get("/v1/tigo/dar/trusted/ekyc/keys");
                 const data = response.data;
                 const status = response.status;
                 if (status === 200 && data?.body?.deviceKeyIdentifier && data?.body?.publicFaceMapEncryptionKey && data?.body?.sdkEncryptionKeyBrowser) {
-                    this.intermediaryCb({ type: "getKeys", data });
+                    intermediaryCb({ type: "getKeys", data });
                     loader(false);
-                    this.initiateFacetec(data?.body?.deviceKeyIdentifier, data?.body?.publicFaceMapEncryptionKey, data?.body?.sdkEncryptionKeyBrowser);
+                    this.initiateFacetec(data?.body?.deviceKeyIdentifier, data?.body?.publicFaceMapEncryptionKey, data?.body?.sdkEncryptionKeyBrowser, successCb, errorCb, intermediaryCb, setSessionToken);
                 } else {
-                    this.errorCb({ type: "getKeys", err: data });
+                    errorCb({ type: "getKeys", err: data });
                     loader(false);
                 }
             }
         } catch (err) {
-            this.errorCb({ type: "getKeys", err });
+            errorCb({ type: "getKeys", err });
             loader(false);
         }
     }
 
-    private async initiateFacetec(deviceKeyIdentifier: string, publicFaceMapEncryptionKey: string, sdkEncryptionKeyBrowser: string) {
+    private async initiateFacetec(deviceKeyIdentifier: string, publicFaceMapEncryptionKey: string, sdkEncryptionKeyBrowser: string, successCb: any, errorCb: any, intermediaryCb: any, setSessionToken: any) {
         const getSessionToken = this.getSessionToken;
-        const intermediaryCb = this.intermediaryCb;
-        const errorCb = this.errorCb;
         FaceTecSDK.initializeInProductionMode(
             sdkEncryptionKeyBrowser,
             deviceKeyIdentifier,
@@ -67,38 +59,35 @@ class FaceTecProcess {
             function (initializedSuccessfully) {
                 if (initializedSuccessfully) {
                     intermediaryCb({ type: "initiateFacetec" });
-                    getSessionToken();
+                    getSessionToken(successCb, errorCb, intermediaryCb, setSessionToken);
                 } else {
                     errorCb({ type: "initiateFacetec" });
                 }
             });
     }
 
-    private async getSessionToken() {
+    private async getSessionToken(successCb: any, errorCb: any, intermediaryCb: any, setSessionToken: any) {
         try {
             const response = await api.get("/v1/tigo/dar/trusted/ekyc/session-tokens");
             const data = response.data;
             const status = response.status;
             if (status === 200 && data?.body?.sessionToken) {
-                this.intermediaryCb({ type: "getSessionToken", data });
-                this.sessionToken = data?.body?.sessionToken;
-                this.livenessCheckProcessor(data?.body?.sessionToken)
+                intermediaryCb({ type: "getSessionToken", data });
+                setSessionToken(data?.body?.sessionToken);
+                this.livenessCheckProcessor(data?.body?.sessionToken, successCb, errorCb, intermediaryCb)
             } else {
-                this.errorCb({ type: "getSessionToken", err: data });
+                errorCb({ type: "getSessionToken", err: data });
             }
         } catch (err) {
             console.log(err)
             console.log(this)
-            this.errorCb({ type: "getSessionToken", err });
+            errorCb({ type: "getSessionToken", err });
         }
     }
 
-    private livenessCheckProcessor(sessionToken: string) {
-        const errorCb = this.errorCb;
+    private livenessCheckProcessor(sessionToken: string, successCb: any, errorCb: any, intermediaryCb: any) {
         const livelinessCheck = this.livelinessCheck;
         const idScanCheck = this.idScanCheck;
-        const successCb = this.successCb;
-        const intermediaryCb = this.intermediaryCb;
         let sdkResult: any;
         try {
             function processSessionResultWhileFaceTecSDKWaits(sessionResult: FaceTecSessionResult, faceScanResultCallback: FaceTecFaceScanResultCallback) {
@@ -108,7 +97,7 @@ class FaceTecProcess {
                     faceScanResultCallback.cancel();
                     return;
                 }
-                livelinessCheck(sessionResult, faceScanResultCallback);
+                livelinessCheck(sessionResult, faceScanResultCallback, errorCb, intermediaryCb);
             }
 
             function processIDScanResultWhileFaceTecSDKWaits(idScanResult: FaceTecIDScanResult, idScanResultCallback: FaceTecIDScanResultCallback) {
@@ -118,7 +107,7 @@ class FaceTecProcess {
                     idScanResultCallback.cancel();
                     return;
                 }
-                idScanCheck(idScanResult, idScanResultCallback);
+                idScanCheck(idScanResult, idScanResultCallback, errorCb, intermediaryCb);
             }
 
             function onFaceTecSDKCompletelyDone() {
@@ -130,11 +119,11 @@ class FaceTecProcess {
 
             new FaceTecSDK.FaceTecSession({ onFaceTecSDKCompletelyDone, processSessionResultWhileFaceTecSDKWaits, processIDScanResultWhileFaceTecSDKWaits }, sessionToken);
         } catch (err) {
-            this.errorCb({ type: "getSessionToken", err });
+            errorCb({ type: "getSessionToken", err });
         }
     }
 
-    private async livelinessCheck(sessionResult: any, faceScanResultCallback: any) {
+    private async livelinessCheck(sessionResult: any, faceScanResultCallback: any, errorCb: any, intermediaryCb: any) {
         try {
             const parameters = {
                 faceScan: sessionResult.faceScan,
@@ -148,17 +137,17 @@ class FaceTecProcess {
             const data = response.data;
             const status = response.status;
             if (status === 200 && data?.body?.scanResultBlob) {
-                this.intermediaryCb({ type: "livelinessCheck", data });
+                intermediaryCb({ type: "livelinessCheck", data });
                 faceScanResultCallback.proceedToNextStep(data.body.scanResultBlob);
             } else {
-                this.errorCb({ type: "livelinessCheck", err: data });
+                errorCb({ type: "livelinessCheck", err: data });
             }
         } catch (err) {
-            this.errorCb({ type: "livelinessCheck", err });
+            errorCb({ type: "livelinessCheck", err });
         }
     }
 
-    private async idScanCheck(idScanResult: any, idScanResultCallback: any) {
+    private async idScanCheck(idScanResult: any, idScanResultCallback: any, errorCb: any, intermediaryCb: any) {
         try {
             const parameters: { [key: string]: any } = {
                 idScan: idScanResult.idScan
@@ -180,13 +169,13 @@ class FaceTecProcess {
             const data = response.data;
             const status = response.status;
             if (status === 200 && data?.body?.scanResultBlob) {
-                this.intermediaryCb({ type: "idScanCheck", data });
+                intermediaryCb({ type: "idScanCheck", data });
                 idScanResultCallback.proceedToNextStep(data?.body?.scanResultBlob);
             } else {
-                this.errorCb({ type: "idScanCheck", err: data });
+                errorCb({ type: "idScanCheck", err: data });
             }
         } catch (err) {
-            this.errorCb({ type: "idScanCheck", err });
+            errorCb({ type: "idScanCheck", err });
         }
     }
 
