@@ -1,0 +1,29 @@
+{
+    "compilerOptions": {
+        "allowUnreachableCode": false,
+        "allowUnusedLabels": false,
+        "declaration": true,
+        "forceConsistentCasingInFileNames": true,
+        "lib": [
+            "es6",
+            "dom",
+            "dom.iterable",
+            "esnext"
+          ],
+        "module": "commonjs",
+        "noEmitOnError": true,
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitReturns": true,
+        "pretty": true,
+        "sourceMap": true,
+        "strict": true,
+        "target": "es6",
+        "rootDir": ".",
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "outDir": "build"
+    },
+    "exclude": [
+        "node_modules"
+    ]
+}
