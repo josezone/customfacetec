@@ -4,7 +4,6 @@ class Api {
     axios!: AxiosInstance;
     constructor() {
         this.axios = axios.create({
-            baseURL: "https://activate-dev.tigo.com.py",
             withCredentials: true,
             headers: {
                 Accept: 'application/json',
