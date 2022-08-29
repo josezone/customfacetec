@@ -51,8 +51,6 @@ class FaceTecProcess {
                 }
             }
         } catch (err) {
-            console.log(err)
-            console.log(this)
             this.errorCb({ type: "getKeys", err });
             loader(false);
         }
@@ -89,6 +87,8 @@ class FaceTecProcess {
                 this.errorCb({ type: "getSessionToken", err: data });
             }
         } catch (err) {
+            console.log(err)
+            console.log(this)
             this.errorCb({ type: "getSessionToken", err });
         }
     }
