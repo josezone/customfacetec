@@ -39,7 +39,7 @@ export const facetec = async (
                     response.data.body.sdkEncryptionKeyBrowser,
                     response.data.body.deviceKeyIdentifier,
                     response.data.body.publicFaceMapEncryptionKey,
-                    function (initializedSuccessfully) {
+                    async (initializedSuccessfully) => {
                         if (initializedSuccessfully) {
                             intermediaryCb({ type: "initiateFacetec" });
                             const response2 = await api.get("/v1/tigo/dar/trusted/ekyc/session-tokens");
@@ -51,7 +51,7 @@ export const facetec = async (
                                 intermediaryCb({ type: "getSessionToken", data });
                                 setSessionToken(data?.body?.sessionToken);
                                 let sdkResult;
-                                function processSessionResultWhileFaceTecSDKWaits(sessionResult, faceScanResultCallback) {
+                                const processSessionResultWhileFaceTecSDKWaits = async (sessionResult, faceScanResultCallback) => {
                                     sdkResult = sessionResult;
                                     if (sessionResult.status !== FaceTecSDK.FaceTecSessionStatus.SessionCompletedSuccessfully) {
                                         Promise.reject({ type: "sessionError", err: FaceTecSDK.FaceTecSessionStatus[sessionResult.status] });
@@ -82,7 +82,7 @@ export const facetec = async (
                                     }
                                 }
 
-                                function processIDScanResultWhileFaceTecSDKWaits(idScanResult, idScanResultCallback) {
+                                const processIDScanResultWhileFaceTecSDKWaits = async (idScanResult, idScanResultCallback) => {
                                     sdkResult = idScanResult;
                                     if (idScanResult.status !== FaceTecSDK.FaceTecIDScanStatus.Success) {
                                         Promise.reject({ type: "idSessionError", err: FaceTecSDK.FaceTecIDScanStatus[idScanResult.status] });
@@ -121,7 +121,7 @@ export const facetec = async (
                                     }
                                 }
 
-                                function onFaceTecSDKCompletelyDone() {
+                                const onFaceTecSDKCompletelyDone = () => {
                                     Promise.resolve(sdkResult);
                                     FaceTecSDK.unload(() => {
                                         intermediaryCb({ type: "Facetec Unload Done" });
@@ -143,7 +143,7 @@ export const facetec = async (
         } else {
             loader(false);
             let sdkResult;
-            function processSessionResultWhileFaceTecSDKWaits(sessionResult, faceScanResultCallback) {
+            const processSessionResultWhileFaceTecSDKWaits = async (sessionResult, faceScanResultCallback) => {
                 sdkResult = sessionResult;
                 if (sessionResult.status !== FaceTecSDK.FaceTecSessionStatus.SessionCompletedSuccessfully) {
                     Promise.reject({ type: "sessionError", err: FaceTecSDK.FaceTecSessionStatus[sessionResult.status] });
@@ -174,7 +174,7 @@ export const facetec = async (
                 }
             }
 
-            function processIDScanResultWhileFaceTecSDKWaits(idScanResult, idScanResultCallback) {
+            const processIDScanResultWhileFaceTecSDKWaits = async (idScanResult, idScanResultCallback) => {
                 sdkResult = idScanResult;
                 if (idScanResult.status !== FaceTecSDK.FaceTecIDScanStatus.Success) {
                     Promise.reject({ type: "idSessionError", err: FaceTecSDK.FaceTecIDScanStatus[idScanResult.status] });
@@ -213,7 +213,7 @@ export const facetec = async (
                 }
             }
 
-            function onFaceTecSDKCompletelyDone() {
+            const onFaceTecSDKCompletelyDone = () => {
                 Promise.resolve(sdkResult);
                 FaceTecSDK.unload(() => {
                     intermediaryCb({ type: "Facetec Unload Done" });
@@ -226,3 +226,5 @@ export const facetec = async (
         Promise.reject({ type: "catch", err });
     }
 }
+
+export default facetec;
