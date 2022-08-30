@@ -15,7 +15,7 @@ export const facetec = (
     sessionToken,
     setSessionToken
 ) => {
-    return new Promise((resolve, reject) => {
+    return new Promise(async(resolve, reject) => {
         try {
             FaceTecSDK.setResourceDirectory("/FaceTec_resources");
             FaceTecSDK.setImagesDirectory("/FaceTec_images");
