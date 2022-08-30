@@ -1,5 +1,5 @@
 const axios = require('axios');
-const FaceTecSDK = require('./facetec/FaceTecSDK');
+const { FaceTecSDK } = require('./facetec/FaceTecSDK');
 
 const api = axios.create({
     withCredentials: true,
