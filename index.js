@@ -34,7 +34,7 @@ export const facetec = async (
                 response.data.body.publicFaceMapEncryptionKey &&
                 response.data.body.sdkEncryptionKeyBrowser) {
                 loader(false);
-                intermediaryCb({ type: "getKeys", data });
+                intermediaryCb({ type: "getKeys", response });
                 FaceTecSDK.initializeInProductionMode(
                     response.data.body.sdkEncryptionKeyBrowser,
                     response.data.body.deviceKeyIdentifier,
@@ -48,7 +48,7 @@ export const facetec = async (
                                 response2.data &&
                                 response2.data.body &&
                                 response2.data.body.sessionToken) {
-                                intermediaryCb({ type: "getSessionToken", data });
+                                intermediaryCb({ type: "getSessionToken", response: response2 });
                                 setSessionToken(data?.body?.sessionToken);
                                 let sdkResult;
                                 const processSessionResultWhileFaceTecSDKWaits = async (sessionResult, faceScanResultCallback) => {
@@ -75,10 +75,10 @@ export const facetec = async (
                                         response3.data &&
                                         response3.data.body &&
                                         response3.data.body.scanResultBlob) {
-                                        intermediaryCb({ type: "livelinessCheck", data });
+                                        intermediaryCb({ type: "livelinessCheck", response: response3 });
                                         faceScanResultCallback.proceedToNextStep(data.body.scanResultBlob);
                                     } else {
-                                        Promise.reject({ type: "livelinessCheck", err: data });
+                                        Promise.reject({ type: "livelinessCheck", err: response3 });
                                     }
                                 }
 
@@ -114,10 +114,10 @@ export const facetec = async (
                                         response4.data &&
                                         response4.data.body &&
                                         response4.data.body.scanResultBlob) {
-                                        intermediaryCb({ type: "idScanCheck", data });
+                                        intermediaryCb({ type: "idScanCheck", response: response4 });
                                         idScanResultCallback.proceedToNextStep(data?.body?.scanResultBlob);
                                     } else {
-                                        romise.reject({ type: "idScanCheck", err: data });
+                                        Promise.reject({ type: "idScanCheck", err: response4 });
                                     }
                                 }
 
@@ -130,7 +130,7 @@ export const facetec = async (
 
                                 new FaceTecSDK.FaceTecSession({ onFaceTecSDKCompletelyDone, processSessionResultWhileFaceTecSDKWaits, processIDScanResultWhileFaceTecSDKWaits }, sessionToken);
                             } else {
-                                Promise.reject({ type: "getSessionToken", err: data });
+                                Promise.reject({ type: "getSessionToken", response: response2 });
                             }
                         } else {
                             Promise.reject({ type: "initiateFacetec" });
@@ -138,7 +138,7 @@ export const facetec = async (
                     });
             } else {
                 loader(false);
-                Promise.reject({ type: "getKeys", err: data });
+                Promise.reject({ type: "getKeys", err: response });
             }
         } else {
             loader(false);
@@ -167,10 +167,10 @@ export const facetec = async (
                     response3.data &&
                     response3.data.body &&
                     response3.data.body.scanResultBlob) {
-                    intermediaryCb({ type: "livelinessCheck", data });
+                    intermediaryCb({ type: "livelinessCheck", response: response3 });
                     faceScanResultCallback.proceedToNextStep(data.body.scanResultBlob);
                 } else {
-                    Promise.reject({ type: "livelinessCheck", err: data });
+                    Promise.reject({ type: "livelinessCheck", err: response3 });
                 }
             }
 
@@ -206,10 +206,10 @@ export const facetec = async (
                     response4.data &&
                     response4.data.body &&
                     response4.data.body.scanResultBlob) {
-                    intermediaryCb({ type: "idScanCheck", data });
+                    intermediaryCb({ type: "idScanCheck", response: response4 });
                     idScanResultCallback.proceedToNextStep(data?.body?.scanResultBlob);
                 } else {
-                    romise.reject({ type: "idScanCheck", err: data });
+                    romise.reject({ type: "idScanCheck", err: response4 });
                 }
             }
 
