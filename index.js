@@ -54,8 +54,8 @@ export const facetec = async (
                                 const processSessionResultWhileFaceTecSDKWaits = async (sessionResult, faceScanResultCallback) => {
                                     sdkResult = sessionResult;
                                     if (sessionResult.status !== FaceTecSDK.FaceTecSessionStatus.SessionCompletedSuccessfully) {
-                                        Promise.reject({ type: "sessionError", err: FaceTecSDK.FaceTecSessionStatus[sessionResult.status] });
                                         faceScanResultCallback.cancel();
+                                        Promise.reject({ type: "sessionError", err: FaceTecSDK.FaceTecSessionStatus[sessionResult.status] });
                                         return;
                                     }
                                     const parameters = {
@@ -85,8 +85,8 @@ export const facetec = async (
                                 const processIDScanResultWhileFaceTecSDKWaits = async (idScanResult, idScanResultCallback) => {
                                     sdkResult = idScanResult;
                                     if (idScanResult.status !== FaceTecSDK.FaceTecIDScanStatus.Success) {
-                                        Promise.reject({ type: "idSessionError", err: FaceTecSDK.FaceTecIDScanStatus[idScanResult.status] });
                                         idScanResultCallback.cancel();
+                                        Promise.reject({ type: "idSessionError", err: FaceTecSDK.FaceTecIDScanStatus[idScanResult.status] });
                                         return;
                                     }
                                     const parameters2 = {
@@ -146,8 +146,8 @@ export const facetec = async (
             const processSessionResultWhileFaceTecSDKWaits = async (sessionResult, faceScanResultCallback) => {
                 sdkResult = sessionResult;
                 if (sessionResult.status !== FaceTecSDK.FaceTecSessionStatus.SessionCompletedSuccessfully) {
-                    Promise.reject({ type: "sessionError", err: FaceTecSDK.FaceTecSessionStatus[sessionResult.status] });
                     faceScanResultCallback.cancel();
+                    Promise.reject({ type: "sessionError", err: FaceTecSDK.FaceTecSessionStatus[sessionResult.status] });
                     return;
                 }
                 const parameters = {
@@ -177,8 +177,8 @@ export const facetec = async (
             const processIDScanResultWhileFaceTecSDKWaits = async (idScanResult, idScanResultCallback) => {
                 sdkResult = idScanResult;
                 if (idScanResult.status !== FaceTecSDK.FaceTecIDScanStatus.Success) {
-                    Promise.reject({ type: "idSessionError", err: FaceTecSDK.FaceTecIDScanStatus[idScanResult.status] });
                     idScanResultCallback.cancel();
+                    Promise.reject({ type: "idSessionError", err: FaceTecSDK.FaceTecIDScanStatus[idScanResult.status] });
                     return;
                 }
                 const parameters2 = {
