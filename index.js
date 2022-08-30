@@ -49,7 +49,7 @@ export const facetec = async (
                                 response2.data.body &&
                                 response2.data.body.sessionToken) {
                                 intermediaryCb({ type: "getSessionToken", response: response2 });
-                                setSessionToken(data?.body?.sessionToken);
+                                setSessionToken(response2.data.body.sessionToken);
                                 let sdkResult;
                                 const processSessionResultWhileFaceTecSDKWaits = async (sessionResult, faceScanResultCallback) => {
                                     sdkResult = sessionResult;
@@ -115,7 +115,7 @@ export const facetec = async (
                                         response4.data.body &&
                                         response4.data.body.scanResultBlob) {
                                         intermediaryCb({ type: "idScanCheck", response: response4 });
-                                        idScanResultCallback.proceedToNextStep(data?.body?.scanResultBlob);
+                                        idScanResultCallback.proceedToNextStep(response4.data.body.scanResultBlob);
                                     } else {
                                         Promise.reject({ type: "idScanCheck", err: response4 });
                                     }
@@ -207,7 +207,7 @@ export const facetec = async (
                     response4.data.body &&
                     response4.data.body.scanResultBlob) {
                     intermediaryCb({ type: "idScanCheck", response: response4 });
-                    idScanResultCallback.proceedToNextStep(data?.body?.scanResultBlob);
+                    idScanResultCallback.proceedToNextStep(response4.data.body.scanResultBlob);
                 } else {
                     romise.reject({ type: "idScanCheck", err: response4 });
                 }
