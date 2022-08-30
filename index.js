@@ -68,16 +68,22 @@ export const facetec = async (
                                             faceScanResultCallback.uploadProgress(progress);
                                         }
                                     }
-                                    const response3 = await api.post("/v1/tigo/dar/trusted/ekyc/live-facemaps", parameters, config);
-                                    if (response3 &&
-                                        response3.status === 200 &&
-                                        response3.data &&
-                                        response3.data.body &&
-                                        response3.data.body.scanResultBlob) {
-                                        intermediaryCb({ type: "livelinessCheck", response: response3 });
-                                        faceScanResultCallback.proceedToNextStep(data.body.scanResultBlob);
-                                    } else {
-                                        Promise.reject({ type: "livelinessCheck", err: response3 });
+                                    try {
+                                        const response3 = await api.post("/v1/tigo/dar/trusted/ekyc/live-facemaps", parameters, config);
+                                        if (response3 &&
+                                            response3.status === 200 &&
+                                            response3.data &&
+                                            response3.data.body &&
+                                            response3.data.body.scanResultBlob) {
+                                            intermediaryCb({ type: "livelinessCheck", response: response3 });
+                                            faceScanResultCallback.proceedToNextStep(data.body.scanResultBlob);
+                                        } else {
+                                            intermediaryCb({ type: "livelinessCheck", err: response3 });
+                                            faceScanResultCallback.cancel();
+                                        }
+                                    } catch (err) {
+                                        intermediaryCb({ type: "livelinessCheck", err });
+                                        faceScanResultCallback.cancel();
                                     }
                                 }
 
@@ -105,17 +111,22 @@ export const facetec = async (
                                             faceScanResultCallback.uploadProgress(progress);
                                         }
                                     }
-
-                                    const response4 = await api.post("/v1/tigo/dar/trusted/ekyc/document-scans", parameters, config);
-                                    if (response4 &&
-                                        response4.status === 200 &&
-                                        response4.data &&
-                                        response4.data.body &&
-                                        response4.data.body.scanResultBlob) {
-                                        intermediaryCb({ type: "idScanCheck", response: response4 });
-                                        idScanResultCallback.proceedToNextStep(response4.data.body.scanResultBlob);
-                                    } else {
-                                        Promise.reject({ type: "idScanCheck", err: response4 });
+                                    try {
+                                        const response4 = await api.post("/v1/tigo/dar/trusted/ekyc/document-scans", parameters, config);
+                                        if (response4 &&
+                                            response4.status === 200 &&
+                                            response4.data &&
+                                            response4.data.body &&
+                                            response4.data.body.scanResultBlob) {
+                                            intermediaryCb({ type: "idScanCheck", response: response4 });
+                                            idScanResultCallback.proceedToNextStep(response4.data.body.scanResultBlob);
+                                        } else {
+                                            intermediaryCb({ type: "idScanCheck", err: response4 });
+                                            idScanResultCallback.cancel();
+                                        }
+                                    } catch (err) {
+                                        intermediaryCb({ type: "idScanCheck", err });
+                                        idScanResultCallback.cancel();
                                     }
                                 }
 
@@ -158,16 +169,22 @@ export const facetec = async (
                         faceScanResultCallback.uploadProgress(progress);
                     }
                 }
-                const response3 = await api.post("/v1/tigo/dar/trusted/ekyc/live-facemaps", parameters, config);
-                if (response3 &&
-                    response3.status === 200 &&
-                    response3.data &&
-                    response3.data.body &&
-                    response3.data.body.scanResultBlob) {
-                    intermediaryCb({ type: "livelinessCheck", response: response3 });
-                    faceScanResultCallback.proceedToNextStep(data.body.scanResultBlob);
-                } else {
-                    Promise.reject({ type: "livelinessCheck", err: response3 });
+                try {
+                    const response3 = await api.post("/v1/tigo/dar/trusted/ekyc/live-facemaps", parameters, config);
+                    if (response3 &&
+                        response3.status === 200 &&
+                        response3.data &&
+                        response3.data.body &&
+                        response3.data.body.scanResultBlob) {
+                        intermediaryCb({ type: "livelinessCheck", response: response3 });
+                        faceScanResultCallback.proceedToNextStep(data.body.scanResultBlob);
+                    } else {
+                        intermediaryCb({ type: "livelinessCheck", err: response3 });
+                        faceScanResultCallback.cancel();
+                    }
+                } catch (err) {
+                    intermediaryCb({ type: "livelinessCheck", err });
+                    faceScanResultCallback.cancel();
                 }
             }
 
@@ -195,17 +212,22 @@ export const facetec = async (
                         faceScanResultCallback.uploadProgress(progress);
                     }
                 }
-
-                const response4 = await api.post("/v1/tigo/dar/trusted/ekyc/document-scans", parameters, config);
-                if (response4 &&
-                    response4.status === 200 &&
-                    response4.data &&
-                    response4.data.body &&
-                    response4.data.body.scanResultBlob) {
-                    intermediaryCb({ type: "idScanCheck", response: response4 });
-                    idScanResultCallback.proceedToNextStep(response4.data.body.scanResultBlob);
-                } else {
-                    romise.reject({ type: "idScanCheck", err: response4 });
+                try {
+                    const response4 = await api.post("/v1/tigo/dar/trusted/ekyc/document-scans", parameters, config);
+                    if (response4 &&
+                        response4.status === 200 &&
+                        response4.data &&
+                        response4.data.body &&
+                        response4.data.body.scanResultBlob) {
+                        intermediaryCb({ type: "idScanCheck", response: response4 });
+                        idScanResultCallback.proceedToNextStep(response4.data.body.scanResultBlob);
+                    } else {
+                        intermediaryCb({ type: "idScanCheck", err: response4 });
+                        idScanResultCallback.cancel();
+                    }
+                } catch (err) {
+                    intermediaryCb({ type: "idScanCheck", err });
+                    idScanResultCallback.cancel();
                 }
             }
 
