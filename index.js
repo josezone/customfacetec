@@ -9,240 +9,242 @@ const api = axios.create({
     },
 });
 
-export const facetec = async (
+export const facetec = (
     loader,
     intermediaryCb,
     sessionToken,
     setSessionToken
 ) => {
-    try {
-        FaceTecSDK.setResourceDirectory("/FaceTec_resources");
-        FaceTecSDK.setImagesDirectory("/FaceTec_images");
-        const resourceResolve = await Promise.all([
-            fetch('/FaceTec_resources/011c90516755d702cfb4205ca9d93e21fe6683b8.data'),
-            fetch('/FaceTec_resources/011c90516755d702cfb4205ca9d93e21fe6683b8.wasm'),
-            fetch('/FaceTec_resources/011c90516755d702cfb4205ca9d93e21fe6683b8_cache.wasm')
-        ])
-        await Promise.all(resourceResolve.map(val => val.blob()));
-        if (!sessionToken) {
-            const response = await api.get("/v1/tigo/dar/trusted/ekyc/keys");
-            if (response &&
-                response.status === 200 &&
-                response.data &&
-                response.data.body &&
-                response.data.body.deviceKeyIdentifier &&
-                response.data.body.publicFaceMapEncryptionKey &&
-                response.data.body.sdkEncryptionKeyBrowser) {
-                loader(false);
-                intermediaryCb({ type: "getKeys", response });
-                FaceTecSDK.initializeInProductionMode(
-                    response.data.body.sdkEncryptionKeyBrowser,
-                    response.data.body.deviceKeyIdentifier,
-                    response.data.body.publicFaceMapEncryptionKey,
-                    async (initializedSuccessfully) => {
-                        if (initializedSuccessfully) {
-                            intermediaryCb({ type: "initiateFacetec" });
-                            const response2 = await api.get("/v1/tigo/dar/trusted/ekyc/session-tokens");
-                            if (response2 &&
-                                response2.status === 200 &&
-                                response2.data &&
-                                response2.data.body &&
-                                response2.data.body.sessionToken) {
-                                intermediaryCb({ type: "getSessionToken", response: response2 });
-                                setSessionToken(response2.data.body.sessionToken);
-                                let sdkResult;
-                                const processSessionResultWhileFaceTecSDKWaits = async (sessionResult, faceScanResultCallback) => {
-                                    sdkResult = sessionResult;
-                                    if (sessionResult.status !== FaceTecSDK.FaceTecSessionStatus.SessionCompletedSuccessfully) {
-                                        faceScanResultCallback.cancel();
-                                        return;
-                                    }
-                                    const parameters = {
-                                        faceScan: sessionResult.faceScan,
-                                        auditTrailImage: sessionResult.auditTrail[0],
-                                        lowQualityAuditTrailImage: sessionResult.lowQualityAuditTrail[0]
-                                    };
-                                    const config = {
-                                        onUploadProgress: (event) => {
-                                            const progress = event.loaded / event.total;
-                                            faceScanResultCallback.uploadProgress(progress);
+    return new Promise((resolve, reject) => {
+        try {
+            FaceTecSDK.setResourceDirectory("/FaceTec_resources");
+            FaceTecSDK.setImagesDirectory("/FaceTec_images");
+            const resourceResolve = await Promise.all([
+                fetch('/FaceTec_resources/011c90516755d702cfb4205ca9d93e21fe6683b8.data'),
+                fetch('/FaceTec_resources/011c90516755d702cfb4205ca9d93e21fe6683b8.wasm'),
+                fetch('/FaceTec_resources/011c90516755d702cfb4205ca9d93e21fe6683b8_cache.wasm')
+            ])
+            await Promise.all(resourceResolve.map(val => val.blob()));
+            if (!sessionToken) {
+                const response = await api.get("/v1/tigo/dar/trusted/ekyc/keys");
+                if (response &&
+                    response.status === 200 &&
+                    response.data &&
+                    response.data.body &&
+                    response.data.body.deviceKeyIdentifier &&
+                    response.data.body.publicFaceMapEncryptionKey &&
+                    response.data.body.sdkEncryptionKeyBrowser) {
+                    loader(false);
+                    intermediaryCb({ type: "getKeys", response });
+                    FaceTecSDK.initializeInProductionMode(
+                        response.data.body.sdkEncryptionKeyBrowser,
+                        response.data.body.deviceKeyIdentifier,
+                        response.data.body.publicFaceMapEncryptionKey,
+                        async (initializedSuccessfully) => {
+                            if (initializedSuccessfully) {
+                                intermediaryCb({ type: "initiateFacetec" });
+                                const response2 = await api.get("/v1/tigo/dar/trusted/ekyc/session-tokens");
+                                if (response2 &&
+                                    response2.status === 200 &&
+                                    response2.data &&
+                                    response2.data.body &&
+                                    response2.data.body.sessionToken) {
+                                    intermediaryCb({ type: "getSessionToken", response: response2 });
+                                    setSessionToken(response2.data.body.sessionToken);
+                                    let sdkResult;
+                                    const processSessionResultWhileFaceTecSDKWaits = async (sessionResult, faceScanResultCallback) => {
+                                        sdkResult = sessionResult;
+                                        if (sessionResult.status !== FaceTecSDK.FaceTecSessionStatus.SessionCompletedSuccessfully) {
+                                            faceScanResultCallback.cancel();
+                                            return;
                                         }
-                                    }
-                                    try {
-                                        const response3 = await api.post("/v1/tigo/dar/trusted/ekyc/live-facemaps", parameters, config);
-                                        if (response3 &&
-                                            response3.status === 200 &&
-                                            response3.data &&
-                                            response3.data.body &&
-                                            response3.data.body.scanResultBlob) {
-                                            intermediaryCb({ type: "livelinessCheck", response: response3 });
-                                            faceScanResultCallback.proceedToNextStep(data.body.scanResultBlob);
-                                        } else {
-                                            intermediaryCb({ type: "livelinessCheck", err: response3 });
+                                        const parameters = {
+                                            faceScan: sessionResult.faceScan,
+                                            auditTrailImage: sessionResult.auditTrail[0],
+                                            lowQualityAuditTrailImage: sessionResult.lowQualityAuditTrail[0]
+                                        };
+                                        const config = {
+                                            onUploadProgress: (event) => {
+                                                const progress = event.loaded / event.total;
+                                                faceScanResultCallback.uploadProgress(progress);
+                                            }
+                                        }
+                                        try {
+                                            const response3 = await api.post("/v1/tigo/dar/trusted/ekyc/live-facemaps", parameters, config);
+                                            if (response3 &&
+                                                response3.status === 200 &&
+                                                response3.data &&
+                                                response3.data.body &&
+                                                response3.data.body.scanResultBlob) {
+                                                intermediaryCb({ type: "livelinessCheck", response: response3 });
+                                                faceScanResultCallback.proceedToNextStep(data.body.scanResultBlob);
+                                            } else {
+                                                intermediaryCb({ type: "livelinessCheck", err: response3 });
+                                                faceScanResultCallback.cancel();
+                                            }
+                                        } catch (err) {
+                                            intermediaryCb({ type: "livelinessCheck", err });
                                             faceScanResultCallback.cancel();
                                         }
-                                    } catch (err) {
-                                        intermediaryCb({ type: "livelinessCheck", err });
-                                        faceScanResultCallback.cancel();
-                                    }
-                                }
-
-                                const processIDScanResultWhileFaceTecSDKWaits = async (idScanResult, idScanResultCallback) => {
-                                    sdkResult = idScanResult;
-                                    if (idScanResult.status !== FaceTecSDK.FaceTecIDScanStatus.Success) {
-                                        idScanResultCallback.cancel();
-                                        return;
-                                    }
-                                    const parameters2 = {
-                                        idScan: idScanResult.idScan
-                                    };
-
-                                    if (idScanResult.frontImages && idScanResult.frontImages[0]) {
-                                        parameters2.idScanFrontImage = idScanResult.frontImages[0];
                                     }
 
-                                    if (idScanResult.backImages && idScanResult.backImages[0]) {
-                                        parameters2.idScanBackImage = idScanResult.backImages[0];
-                                    }
-
-                                    const config = {
-                                        onUploadProgress: (event) => {
-                                            const progress = event.loaded / event.total;
-                                            faceScanResultCallback.uploadProgress(progress);
+                                    const processIDScanResultWhileFaceTecSDKWaits = async (idScanResult, idScanResultCallback) => {
+                                        sdkResult = idScanResult;
+                                        if (idScanResult.status !== FaceTecSDK.FaceTecIDScanStatus.Success) {
+                                            idScanResultCallback.cancel();
+                                            return;
                                         }
-                                    }
-                                    try {
-                                        const response4 = await api.post("/v1/tigo/dar/trusted/ekyc/document-scans", parameters, config);
-                                        if (response4 &&
-                                            response4.status === 200 &&
-                                            response4.data &&
-                                            response4.data.body &&
-                                            response4.data.body.scanResultBlob) {
-                                            intermediaryCb({ type: "idScanCheck", response: response4 });
-                                            idScanResultCallback.proceedToNextStep(response4.data.body.scanResultBlob);
-                                        } else {
-                                            intermediaryCb({ type: "idScanCheck", err: response4 });
+                                        const parameters2 = {
+                                            idScan: idScanResult.idScan
+                                        };
+
+                                        if (idScanResult.frontImages && idScanResult.frontImages[0]) {
+                                            parameters2.idScanFrontImage = idScanResult.frontImages[0];
+                                        }
+
+                                        if (idScanResult.backImages && idScanResult.backImages[0]) {
+                                            parameters2.idScanBackImage = idScanResult.backImages[0];
+                                        }
+
+                                        const config = {
+                                            onUploadProgress: (event) => {
+                                                const progress = event.loaded / event.total;
+                                                faceScanResultCallback.uploadProgress(progress);
+                                            }
+                                        }
+                                        try {
+                                            const response4 = await api.post("/v1/tigo/dar/trusted/ekyc/document-scans", parameters, config);
+                                            if (response4 &&
+                                                response4.status === 200 &&
+                                                response4.data &&
+                                                response4.data.body &&
+                                                response4.data.body.scanResultBlob) {
+                                                intermediaryCb({ type: "idScanCheck", response: response4 });
+                                                idScanResultCallback.proceedToNextStep(response4.data.body.scanResultBlob);
+                                            } else {
+                                                intermediaryCb({ type: "idScanCheck", err: response4 });
+                                                idScanResultCallback.cancel();
+                                            }
+                                        } catch (err) {
+                                            intermediaryCb({ type: "idScanCheck", err });
                                             idScanResultCallback.cancel();
                                         }
-                                    } catch (err) {
-                                        intermediaryCb({ type: "idScanCheck", err });
-                                        idScanResultCallback.cancel();
                                     }
-                                }
 
-                                const onFaceTecSDKCompletelyDone = () => {
-                                    Promise.resolve(sdkResult);
-                                    FaceTecSDK.unload(() => {
-                                        intermediaryCb({ type: "Facetec Unload Done" });
-                                    })
-                                }
+                                    const onFaceTecSDKCompletelyDone = () => {
+                                        resolve(sdkResult);
+                                        FaceTecSDK.unload(() => {
+                                            intermediaryCb({ type: "Facetec Unload Done" });
+                                        })
+                                    }
 
-                                new FaceTecSDK.FaceTecSession({ onFaceTecSDKCompletelyDone, processSessionResultWhileFaceTecSDKWaits, processIDScanResultWhileFaceTecSDKWaits }, response2.data.body.sessionToken);
+                                    new FaceTecSDK.FaceTecSession({ onFaceTecSDKCompletelyDone, processSessionResultWhileFaceTecSDKWaits, processIDScanResultWhileFaceTecSDKWaits }, response2.data.body.sessionToken);
+                                } else {
+                                    reject({ type: "getSessionToken", response: response2 });
+                                }
                             } else {
-                                Promise.reject({ type: "getSessionToken", response: response2 });
+                                reject({ type: "initiateFacetec" });
                             }
-                        } else {
-                            Promise.reject({ type: "initiateFacetec" });
-                        }
-                    });
+                        });
+                } else {
+                    loader(false);
+                    reject({ type: "getKeys", err: response });
+                }
             } else {
                 loader(false);
-                Promise.reject({ type: "getKeys", err: response });
-            }
-        } else {
-            loader(false);
-            let sdkResult;
-            const processSessionResultWhileFaceTecSDKWaits = async (sessionResult, faceScanResultCallback) => {
-                sdkResult = sessionResult;
-                if (sessionResult.status !== FaceTecSDK.FaceTecSessionStatus.SessionCompletedSuccessfully) {
-                    faceScanResultCallback.cancel();
-                    return;
-                }
-                const parameters = {
-                    faceScan: sessionResult.faceScan,
-                    auditTrailImage: sessionResult.auditTrail[0],
-                    lowQualityAuditTrailImage: sessionResult.lowQualityAuditTrail[0]
-                };
-                const config = {
-                    onUploadProgress: (event) => {
-                        const progress = event.loaded / event.total;
-                        faceScanResultCallback.uploadProgress(progress);
+                let sdkResult;
+                const processSessionResultWhileFaceTecSDKWaits = async (sessionResult, faceScanResultCallback) => {
+                    sdkResult = sessionResult;
+                    if (sessionResult.status !== FaceTecSDK.FaceTecSessionStatus.SessionCompletedSuccessfully) {
+                        faceScanResultCallback.cancel();
+                        return;
                     }
-                }
-                try {
-                    const response3 = await api.post("/v1/tigo/dar/trusted/ekyc/live-facemaps", parameters, config);
-                    if (response3 &&
-                        response3.status === 200 &&
-                        response3.data &&
-                        response3.data.body &&
-                        response3.data.body.scanResultBlob) {
-                        intermediaryCb({ type: "livelinessCheck", response: response3 });
-                        faceScanResultCallback.proceedToNextStep(data.body.scanResultBlob);
-                    } else {
-                        intermediaryCb({ type: "livelinessCheck", err: response3 });
+                    const parameters = {
+                        faceScan: sessionResult.faceScan,
+                        auditTrailImage: sessionResult.auditTrail[0],
+                        lowQualityAuditTrailImage: sessionResult.lowQualityAuditTrail[0]
+                    };
+                    const config = {
+                        onUploadProgress: (event) => {
+                            const progress = event.loaded / event.total;
+                            faceScanResultCallback.uploadProgress(progress);
+                        }
+                    }
+                    try {
+                        const response3 = await api.post("/v1/tigo/dar/trusted/ekyc/live-facemaps", parameters, config);
+                        if (response3 &&
+                            response3.status === 200 &&
+                            response3.data &&
+                            response3.data.body &&
+                            response3.data.body.scanResultBlob) {
+                            intermediaryCb({ type: "livelinessCheck", response: response3 });
+                            faceScanResultCallback.proceedToNextStep(data.body.scanResultBlob);
+                        } else {
+                            intermediaryCb({ type: "livelinessCheck", err: response3 });
+                            faceScanResultCallback.cancel();
+                        }
+                    } catch (err) {
+                        intermediaryCb({ type: "livelinessCheck", err });
                         faceScanResultCallback.cancel();
                     }
-                } catch (err) {
-                    intermediaryCb({ type: "livelinessCheck", err });
-                    faceScanResultCallback.cancel();
-                }
-            }
-
-            const processIDScanResultWhileFaceTecSDKWaits = async (idScanResult, idScanResultCallback) => {
-                sdkResult = idScanResult;
-                if (idScanResult.status !== FaceTecSDK.FaceTecIDScanStatus.Success) {
-                    idScanResultCallback.cancel();
-                    return;
-                }
-                const parameters2 = {
-                    idScan: idScanResult.idScan
-                };
-
-                if (idScanResult.frontImages && idScanResult.frontImages[0]) {
-                    parameters2.idScanFrontImage = idScanResult.frontImages[0];
                 }
 
-                if (idScanResult.backImages && idScanResult.backImages[0]) {
-                    parameters2.idScanBackImage = idScanResult.backImages[0];
-                }
-
-                const config = {
-                    onUploadProgress: (event) => {
-                        const progress = event.loaded / event.total;
-                        faceScanResultCallback.uploadProgress(progress);
+                const processIDScanResultWhileFaceTecSDKWaits = async (idScanResult, idScanResultCallback) => {
+                    sdkResult = idScanResult;
+                    if (idScanResult.status !== FaceTecSDK.FaceTecIDScanStatus.Success) {
+                        idScanResultCallback.cancel();
+                        return;
                     }
-                }
-                try {
-                    const response4 = await api.post("/v1/tigo/dar/trusted/ekyc/document-scans", parameters, config);
-                    if (response4 &&
-                        response4.status === 200 &&
-                        response4.data &&
-                        response4.data.body &&
-                        response4.data.body.scanResultBlob) {
-                        intermediaryCb({ type: "idScanCheck", response: response4 });
-                        idScanResultCallback.proceedToNextStep(response4.data.body.scanResultBlob);
-                    } else {
-                        intermediaryCb({ type: "idScanCheck", err: response4 });
+                    const parameters2 = {
+                        idScan: idScanResult.idScan
+                    };
+
+                    if (idScanResult.frontImages && idScanResult.frontImages[0]) {
+                        parameters2.idScanFrontImage = idScanResult.frontImages[0];
+                    }
+
+                    if (idScanResult.backImages && idScanResult.backImages[0]) {
+                        parameters2.idScanBackImage = idScanResult.backImages[0];
+                    }
+
+                    const config = {
+                        onUploadProgress: (event) => {
+                            const progress = event.loaded / event.total;
+                            faceScanResultCallback.uploadProgress(progress);
+                        }
+                    }
+                    try {
+                        const response4 = await api.post("/v1/tigo/dar/trusted/ekyc/document-scans", parameters, config);
+                        if (response4 &&
+                            response4.status === 200 &&
+                            response4.data &&
+                            response4.data.body &&
+                            response4.data.body.scanResultBlob) {
+                            intermediaryCb({ type: "idScanCheck", response: response4 });
+                            idScanResultCallback.proceedToNextStep(response4.data.body.scanResultBlob);
+                        } else {
+                            intermediaryCb({ type: "idScanCheck", err: response4 });
+                            idScanResultCallback.cancel();
+                        }
+                    } catch (err) {
+                        intermediaryCb({ type: "idScanCheck", err });
                         idScanResultCallback.cancel();
                     }
-                } catch (err) {
-                    intermediaryCb({ type: "idScanCheck", err });
-                    idScanResultCallback.cancel();
                 }
-            }
 
-            const onFaceTecSDKCompletelyDone = () => {
-                Promise.resolve(sdkResult);
-                FaceTecSDK.unload(() => {
-                    intermediaryCb({ type: "Facetec Unload Done" });
-                })
-            }
+                const onFaceTecSDKCompletelyDone = () => {
+                    resolve(sdkResult);
+                    FaceTecSDK.unload(() => {
+                        intermediaryCb({ type: "Facetec Unload Done" });
+                    })
+                }
 
-            new FaceTecSDK.FaceTecSession({ onFaceTecSDKCompletelyDone, processSessionResultWhileFaceTecSDKWaits, processIDScanResultWhileFaceTecSDKWaits }, sessionToken);
+                new FaceTecSDK.FaceTecSession({ onFaceTecSDKCompletelyDone, processSessionResultWhileFaceTecSDKWaits, processIDScanResultWhileFaceTecSDKWaits }, sessionToken);
+            }
+        } catch (err) {
+            reject({ type: "catch", err });
         }
-    } catch (err) {
-        Promise.reject({ type: "catch", err });
-    }
+    })
 }
 
 export default facetec;
