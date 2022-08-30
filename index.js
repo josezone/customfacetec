@@ -128,7 +128,7 @@ export const facetec = async (
                                     })
                                 }
 
-                                new FaceTecSDK.FaceTecSession({ onFaceTecSDKCompletelyDone, processSessionResultWhileFaceTecSDKWaits, processIDScanResultWhileFaceTecSDKWaits }, sessionToken);
+                                new FaceTecSDK.FaceTecSession({ onFaceTecSDKCompletelyDone, processSessionResultWhileFaceTecSDKWaits, processIDScanResultWhileFaceTecSDKWaits }, response2.data.body.sessionToken);
                             } else {
                                 Promise.reject({ type: "getSessionToken", response: response2 });
                             }
